@@ -81,6 +81,15 @@ resource "aws_lb" "dms-lb" {
     "project" = "dms"
   }
 }
+resource "aws_lb_listener" "http_80" {
+  load_balancer_arn = aws_lb.dms-lb.arn
+  port              = 80
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.dms-group-service-1.arn
+  }
+}
+
 resource "aws_security_group" "lb-dms-sg" {
   name                   = "lb-dms-sg"
   vpc_id                 = aws_vpc.dms-vpc.id
@@ -145,6 +154,16 @@ resource "aws_lb_target_group" "dms-group-service-1" {
   port        = 80
   protocol    = "HTTP"
   target_type = "ip"
+  health_check {
+    healthy_threshold   = 5
+    unhealthy_threshold = 2
+    timeout             = "5"
+    port                = "8080"
+    path                = "/probe"
+    protocol            = "HTTP"
+    interval            = 30
+    matcher             = "200"
+  }
 
 }
 
@@ -154,6 +173,16 @@ resource "aws_lb_target_group" "dms-group-service-2" {
   port        = 80
   protocol    = "HTTP"
   target_type = "ip"
+  health_check {
+    healthy_threshold   = 5
+    unhealthy_threshold = 2
+    timeout             = "5"
+    port                = "8080"
+    path                = "/probe"
+    protocol            = "HTTP"
+    interval            = 30
+    matcher             = "200"
+  }
 }
 
 resource "aws_ecs_service" "dms-service" {
@@ -165,7 +194,7 @@ resource "aws_ecs_service" "dms-service" {
   enable_ecs_managed_tags = true
   launch_type             = "FARGATE"
   platform_version        = "1.4.0"
-  propagate_tags          = "SERVICE"
+
   tags = {
     "project" = "dms"
   }
@@ -179,24 +208,56 @@ resource "aws_ecs_service" "dms-service" {
   load_balancer {
     container_name   = "dms"
     container_port   = 8080
-    target_group_arn = "arn:aws:elasticloadbalancing:us-east-1:674360240577:targetgroup/tg-dms-cl-dms-service-1/76004346d522e166"
+    target_group_arn = aws_lb_target_group.dms-group-service-1.arn
   }
 
   network_configuration {
-    assign_public_ip = false
+    assign_public_ip = true
     security_groups  = [aws_security_group.ecs_sg.id]
     subnets          = [aws_subnet.dms-cluster-subnet1.id, aws_subnet.dms-cluster-subnet2.id]
   }
   timeouts {}
+}
+data "aws_iam_policy_document" "execution_role-policy" {
+  version = "2008-10-17"
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+  }
+}
+resource "aws_iam_role" "execution_role_arn" {
+  assume_role_policy = data.aws_iam_policy_document.execution_role-policy.json
+}
+data "aws_iam_policy_document" "task_role-policy" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+  }
+
+
+}
+resource "aws_iam_role" "task_role_arn" {
+  assume_role_policy = data.aws_iam_policy_document.task_role-policy.json
+  description        = "Allows ECS tasks to call AWS services on your behalf."
+  tags = {
+    "project" = "dms"
+  }
 }
 resource "aws_ecs_task_definition" "dms-task" {
   family                   = "dms-task"
   cpu                      = "256"
   memory                   = "512"
   network_mode             = "awsvpc"
-  execution_role_arn       = "arn:aws:iam::674360240577:role/ecsTaskExecutionRole"
+  execution_role_arn       = aws_iam_role.execution_role_arn.arn
   requires_compatibilities = ["FARGATE"]
-  task_role_arn            = "arn:aws:iam::674360240577:role/ecs-dms-execution-role"
+  task_role_arn            = aws_iam_role.task_role_arn.arn
   container_definitions    = <<TASK_DEFINITION
 [
     {
@@ -256,3 +317,70 @@ resource "aws_ecs_task_definition" "dms-task" {
 ]
 TASK_DEFINITION
 }
+resource "aws_codedeploy_app" "AppECS-dms-cluster-dms-service" {
+  name             = "AppECS-dms-cluster-dms-service"
+  compute_platform = "ECS"
+  tags             = {}
+}
+data "aws_iam_policy_document" "ecsCodeDeployRole" {
+  version = "2012-10-17"
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["codedeploy.amazonaws.com"]
+    }
+  }
+}
+resource "aws_iam_role" "ecsCodeDeployRole" {
+  name               = "ecsCodeDeployRole"
+  assume_role_policy = data.aws_iam_policy_document.ecsCodeDeployRole.json
+  description        = "Allows CodeDeploy to read S3 objects, invoke Lambda functions, publish to SNS topics, and update ECS services on your behalf."
+  tags               = { project = "dms" }
+}
+
+resource "aws_codedeploy_deployment_group" "DgpECS-dms-cluster-dms-service" {
+  deployment_group_name  = "DgpECS-dms-cluster-dms-service"
+  app_name               = "AppECS-dms-cluster-dms-service"
+  service_role_arn       = aws_iam_role.ecsCodeDeployRole.arn
+  deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
+
+  deployment_style {
+    deployment_option = "WITH_TRAFFIC_CONTROL"
+    deployment_type   = "BLUE_GREEN"
+  }
+
+
+  auto_rollback_configuration {
+    enabled = true
+    events = [
+      "DEPLOYMENT_FAILURE",
+      "DEPLOYMENT_STOP_ON_REQUEST",
+    ]
+  }
+  ecs_service {
+    cluster_name = "dms-cluster"
+    service_name = "dms-service"
+  }
+  load_balancer_info {
+
+    target_group_pair_info {
+      prod_traffic_route {
+        listener_arns = [
+          aws_lb_listener.http_80.arn,
+        ]
+      }
+
+      target_group {
+        name = "tg-dms-cl-dms-service-1"
+      }
+      target_group {
+        name = "tg-dms-cl-dms-service-2"
+      }
+    }
+  }
+
+
+
+}
+
