@@ -13,6 +13,15 @@ provider "aws" {
 }
 data "aws_caller_identity" "current" {}
 
+resource "aws_ecr_repository" "dms" {
+  name                 = "dms"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = false
+  }
+}
+
 resource "aws_iam_policy" "CodeBuildBasePolicy-dms-us-east-1" {
   description = "Policy used in trust relationship with CodeBuild"
   path                = "/service-role/"
