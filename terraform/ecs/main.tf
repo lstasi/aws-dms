@@ -11,26 +11,57 @@ terraform {
 provider "aws" {
   region = "us-east-1"
 }
+data "aws_caller_identity" "current" {}
 
-resource "aws_ecr_repository" "dms" {
-  name                 = "dms"
-  image_tag_mutability = "MUTABLE"
 
-  image_scanning_configuration {
-    scan_on_push = false
-  }
-}
-
+### Network ###
 resource "aws_vpc" "dms-vpc" {
   cidr_block = "10.0.0.0/16"
   tags = {
-    "Name" = "dms-vpc"
+    "project" = "dms"
   }
 }
+
+resource "aws_vpc_dhcp_options" "default" {
+  domain_name         = "ec2.internal"
+  domain_name_servers = ["AmazonProvidedDNS"]
+  tags = {
+    "project" = "dms"
+  }
+}
+resource "aws_network_acl" "default" {
+  vpc_id = aws_vpc.dms-vpc.id
+  egress {
+    action          = "allow"
+    cidr_block      = "0.0.0.0/0"
+    from_port       = 0
+    icmp_code       = 0
+    icmp_type       = 0
+    ipv6_cidr_block = ""
+    protocol        = "-1"
+    rule_no         = 100
+    to_port         = 0
+  }
+  ingress {
+    action          = "allow"
+    cidr_block      = "0.0.0.0/0"
+    from_port       = 0
+    icmp_code       = 0
+    icmp_type       = 0
+    ipv6_cidr_block = ""
+    protocol        = "-1"
+    rule_no         = 100
+    to_port         = 0
+  }
+  tags = {
+    "project" = "dms"
+  }
+}
+
 resource "aws_internet_gateway" "dms-igw" {
   vpc_id = aws_vpc.dms-vpc.id
   tags = {
-    "Name" = "dms-igw"
+    "project" = "dms"
   }
 }
 resource "aws_subnet" "dms-cluster-subnet1" {
@@ -38,7 +69,7 @@ resource "aws_subnet" "dms-cluster-subnet1" {
   cidr_block = "10.0.0.0/24"
 
   tags = {
-    "Name" = "dms-cluster/Public"
+    "project" = "dms"
   }
 }
 
@@ -47,15 +78,21 @@ resource "aws_subnet" "dms-cluster-subnet2" {
   cidr_block = "10.0.1.0/24"
 
   tags = {
-    "Name" = "dms-cluster/Public"
+    "project" = "dms"
   }
 }
 
 resource "aws_route_table" "main" {
   vpc_id = aws_vpc.dms-vpc.id
+  tags = {
+    "project" = "dms"
+  }
 }
 resource "aws_route_table" "sec" {
   vpc_id = aws_vpc.dms-vpc.id
+  tags = {
+    "project" = "dms"
+  }
 }
 resource "aws_route_table_association" "main_assoc" {
   subnet_id      = aws_subnet.dms-cluster-subnet1.id
@@ -67,16 +104,12 @@ resource "aws_route_table_association" "sec_assoc" {
   route_table_id = aws_route_table.sec.id
 }
 
-
-resource "aws_ecs_cluster" "dms-cluster" {
-  name = "dms-cluster"
-  capacity_providers = [
-    "FARGATE",
-    "FARGATE_SPOT",
-  ]
-
-}
+### LB ###
 resource "aws_lb" "dms-lb" {
+  name               = "dms-lb"
+  internal           = false
+  load_balancer_type = "application"
+  subnets            = [aws_subnet.dms-cluster-subnet1.id, aws_subnet.dms-cluster-subnet2.id]
   tags = {
     "project" = "dms"
   }
@@ -88,10 +121,51 @@ resource "aws_lb_listener" "http_80" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.dms-group-service-1.arn
   }
+
+}
+resource "aws_lb_target_group" "dms-group-service-1" {
+  name        = "dms-service-1"
+  vpc_id      = aws_vpc.dms-vpc.id
+  port        = 80
+  protocol    = "HTTP"
+  target_type = "ip"
+  health_check {
+    healthy_threshold   = 5
+    unhealthy_threshold = 2
+    timeout             = "5"
+    port                = "8080"
+    path                = "/probe"
+    protocol            = "HTTP"
+    interval            = 30
+    matcher             = "200"
+  }
+  tags = {
+    "project" = "dms"
+  }
 }
 
-resource "aws_security_group" "lb-dms-sg" {
-  name                   = "lb-dms-sg"
+resource "aws_lb_target_group" "dms-group-service-2" {
+  name        = "dms-service-2"
+  vpc_id      = aws_vpc.dms-vpc.id
+  port        = 80
+  protocol    = "HTTP"
+  target_type = "ip"
+  health_check {
+    healthy_threshold   = 5
+    unhealthy_threshold = 2
+    timeout             = "5"
+    port                = "8080"
+    path                = "/probe"
+    protocol            = "HTTP"
+    interval            = 30
+    matcher             = "200"
+  }
+  tags = {
+    "project" = "dms"
+  }
+}
+resource "aws_security_group" "dms-lb-sg" {
+  name                   = "dms-lb-sg"
   vpc_id                 = aws_vpc.dms-vpc.id
   revoke_rules_on_delete = false
   description            = "DMS LB Security Group"
@@ -117,9 +191,26 @@ resource "aws_security_group" "lb-dms-sg" {
     self             = false
     to_port          = 0
   }
+  tags = {
+    "project" = "dms"
+  }
 }
-resource "aws_security_group" "ecs_sg" {
-  name                   = "dms-se-3166"
+
+
+### ECS Cluster ###
+resource "aws_ecs_cluster" "dms-cluster" {
+  name = "dms-cluster"
+  capacity_providers = [
+    "FARGATE",
+    "FARGATE_SPOT",
+  ]
+  tags = {
+    "project" = "dms"
+  }
+}
+
+resource "aws_security_group" "dms-ecs-sg" {
+  name                   = "dms-ecs-sg"
   vpc_id                 = aws_vpc.dms-vpc.id
   revoke_rules_on_delete = false
   description            = "2021-04-25T15:55:31.207Z"
@@ -145,46 +236,13 @@ resource "aws_security_group" "ecs_sg" {
     self             = false
     to_port          = 0
   }
-}
-
-
-resource "aws_lb_target_group" "dms-group-service-1" {
-  name        = "tg-dms-cl-dms-service-1"
-  vpc_id      = aws_vpc.dms-vpc.id
-  port        = 80
-  protocol    = "HTTP"
-  target_type = "ip"
-  health_check {
-    healthy_threshold   = 5
-    unhealthy_threshold = 2
-    timeout             = "5"
-    port                = "8080"
-    path                = "/probe"
-    protocol            = "HTTP"
-    interval            = 30
-    matcher             = "200"
-  }
-
-}
-
-resource "aws_lb_target_group" "dms-group-service-2" {
-  name        = "tg-dms-cl-dms-service-2"
-  vpc_id      = aws_vpc.dms-vpc.id
-  port        = 80
-  protocol    = "HTTP"
-  target_type = "ip"
-  health_check {
-    healthy_threshold   = 5
-    unhealthy_threshold = 2
-    timeout             = "5"
-    port                = "8080"
-    path                = "/probe"
-    protocol            = "HTTP"
-    interval            = 30
-    matcher             = "200"
+  tags = {
+    "project" = "dms"
   }
 }
-
+data "aws_ecs_task_definition" "dms-task-def" {
+  task_definition = aws_ecs_task_definition.dms-task.family
+}
 resource "aws_ecs_service" "dms-service" {
   name                              = "dms-service"
   health_check_grace_period_seconds = 0
@@ -199,7 +257,7 @@ resource "aws_ecs_service" "dms-service" {
     "project" = "dms"
   }
 
-  task_definition = "dms-task:8"
+  task_definition = "${aws_ecs_task_definition.dms-task.family}:${max(aws_ecs_task_definition.dms-task.revision, data.aws_ecs_task_definition.dms-task-def.revision)}"
 
   deployment_controller {
     type = "CODE_DEPLOY"
@@ -213,42 +271,10 @@ resource "aws_ecs_service" "dms-service" {
 
   network_configuration {
     assign_public_ip = true
-    security_groups  = [aws_security_group.ecs_sg.id]
+    security_groups  = [aws_security_group.dms-ecs-sg.id]
     subnets          = [aws_subnet.dms-cluster-subnet1.id, aws_subnet.dms-cluster-subnet2.id]
   }
   timeouts {}
-}
-data "aws_iam_policy_document" "execution_role-policy" {
-  version = "2008-10-17"
-  statement {
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
-    }
-  }
-}
-resource "aws_iam_role" "execution_role_arn" {
-  assume_role_policy = data.aws_iam_policy_document.execution_role-policy.json
-}
-data "aws_iam_policy_document" "task_role-policy" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
-    }
-  }
-
-
-}
-resource "aws_iam_role" "task_role_arn" {
-  assume_role_policy = data.aws_iam_policy_document.task_role-policy.json
-  description        = "Allows ECS tasks to call AWS services on your behalf."
-  tags = {
-    "project" = "dms"
-  }
 }
 resource "aws_ecs_task_definition" "dms-task" {
   family                   = "dms-task"
@@ -258,7 +284,10 @@ resource "aws_ecs_task_definition" "dms-task" {
   execution_role_arn       = aws_iam_role.execution_role_arn.arn
   requires_compatibilities = ["FARGATE"]
   task_role_arn            = aws_iam_role.task_role_arn.arn
-  container_definitions    = <<TASK_DEFINITION
+  tags = {
+    "project" = "dms"
+  }
+  container_definitions = <<TASK_DEFINITION
 [
     {
       "dnsSearchDomains": null,
@@ -295,7 +324,7 @@ resource "aws_ecs_task_definition" "dms-task" {
       "memoryReservation": null,
       "volumesFrom": [],
       "stopTimeout": null,
-      "image": "674360240577.dkr.ecr.us-east-1.amazonaws.com/dms:latest",
+      "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/dms:latest",
       "startTimeout": null,
       "firelensConfiguration": null,
       "dependsOn": null,
@@ -317,12 +346,46 @@ resource "aws_ecs_task_definition" "dms-task" {
 ]
 TASK_DEFINITION
 }
-resource "aws_codedeploy_app" "AppECS-dms-cluster-dms-service" {
-  name             = "AppECS-dms-cluster-dms-service"
-  compute_platform = "ECS"
-  tags             = {}
+data "aws_iam_policy_document" "execution_role-policy" {
+  version = "2012-10-17"
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+  }
 }
-data "aws_iam_policy_document" "ecsCodeDeployRole" {
+resource "aws_iam_role" "execution_role_arn" {
+  name = "dms execution role"
+  assume_role_policy = data.aws_iam_policy_document.execution_role-policy.json
+  description        = "dms ecs execution"
+  tags = {
+    "project" = "dms"
+  }
+}
+data "aws_iam_policy_document" "task_role-policy" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+  }
+
+
+}
+resource "aws_iam_role" "task_role_arn" {
+  name = "dms execution role"
+  assume_role_policy = data.aws_iam_policy_document.task_role-policy.json
+  description        = "dms ecs tasks"
+  tags = {
+    "project" = "dms"
+  }
+}
+
+### Deploy Pipeline ###
+data "aws_iam_policy_document" "dms-code-deploy" {
   version = "2012-10-17"
   statement {
     actions = ["sts:AssumeRole"]
@@ -332,25 +395,41 @@ data "aws_iam_policy_document" "ecsCodeDeployRole" {
     }
   }
 }
-resource "aws_iam_role" "ecsCodeDeployRole" {
-  name               = "ecsCodeDeployRole"
-  assume_role_policy = data.aws_iam_policy_document.ecsCodeDeployRole.json
-  description        = "Allows CodeDeploy to read S3 objects, invoke Lambda functions, publish to SNS topics, and update ECS services on your behalf."
-  tags               = { project = "dms" }
+resource "aws_iam_role" "dms-code-deploy" {
+  name               = "dms-code-deploy"
+  assume_role_policy = data.aws_iam_policy_document.dms-code-deploy.json
+  description        = "dms code deploy"
+  tags = {
+    "project" = "dms"
+  }
 }
-
-resource "aws_codedeploy_deployment_group" "DgpECS-dms-cluster-dms-service" {
-  deployment_group_name  = "DgpECS-dms-cluster-dms-service"
-  app_name               = "AppECS-dms-cluster-dms-service"
-  service_role_arn       = aws_iam_role.ecsCodeDeployRole.arn
+resource "aws_codedeploy_app" "dms-app" {
+  name             = "dms-app"
+  compute_platform = "ECS"
+  tags             = {}
+}
+resource "aws_codedeploy_deployment_group" "dms-app-group" {
+  deployment_group_name  = "dms-app-group"
+  app_name               = "dms-app"
+  service_role_arn       = aws_iam_role.dms-code-deploy.arn
   deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
-
+  tags = {
+    "project" = "dms"
+  }
   deployment_style {
     deployment_option = "WITH_TRAFFIC_CONTROL"
     deployment_type   = "BLUE_GREEN"
   }
+  blue_green_deployment_config {
+    deployment_ready_option {
+      action_on_timeout = "CONTINUE_DEPLOYMENT"
+    }
 
-
+    terminate_blue_instances_on_deployment_success {
+      action                           = "TERMINATE"
+      termination_wait_time_in_minutes = 5
+    }
+  }
   auto_rollback_configuration {
     enabled = true
     events = [
@@ -370,17 +449,16 @@ resource "aws_codedeploy_deployment_group" "DgpECS-dms-cluster-dms-service" {
           aws_lb_listener.http_80.arn,
         ]
       }
-
       target_group {
-        name = "tg-dms-cl-dms-service-1"
+        name = "dms-service-1"
       }
       target_group {
-        name = "tg-dms-cl-dms-service-2"
+        name = "dms-service-2"
       }
     }
   }
-
-
-
 }
 
+output "lb-dns" {
+  value = aws_lb.dms-lb.dns_name
+}
