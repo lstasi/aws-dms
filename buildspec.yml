@@ -6,4 +6,4 @@ phases:
   pre_build:
     commands:
       - pip install -r requirements.txt
-      - python app_test.py
+      - python src/app_test.py
