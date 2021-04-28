@@ -29,7 +29,7 @@ resource "aws_lb_target_group" "dms-group-service-blue" {
     unhealthy_threshold = 2
     timeout             = "5"
     port                = "8080"
-    path                = "/probe"
+    path                = "/"
     protocol            = "HTTP"
     interval            = 30
     matcher             = "200"
@@ -49,7 +49,7 @@ resource "aws_lb_target_group" "dms-group-service-green" {
     unhealthy_threshold = 2
     timeout             = "5"
     port                = "8080"
-    path                = "/probe"
+    path                = "/"
     protocol            = "HTTP"
     interval            = 30
     matcher             = "200"
