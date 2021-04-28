@@ -3,14 +3,9 @@ AWS Docker Micro Services
 
 #Description
 
-Micro Service is based on a Docker image that is build using GitHub Workflow and push to a AWS ECR Registry.
+AWS-DMS is a POC to run docker microservice on AWS. The project has a build process to push the image to AWS ECR Registry.
 The Image is deployed using a Blue/Green strategy into a ECS Cluster based on AWS Fargate.
-There are three terraform projects each one on a different folder inside terraform.
-Code Pipeline contains the definition to support the Git Hub Workflow.
-ECS is the Elastic Container Cluster where the Micro Service is deploy.
-IAM has is used to create the necesary users and roles for the project to run.
-IAM needs to be executed with a user with enough previlege to create new users and roles.
-
+All the infra is provisioned with Terraform.
 
 #Running the Microservice Locally
 ##Local Docker Build
