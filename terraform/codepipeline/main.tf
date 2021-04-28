@@ -6,7 +6,6 @@ terraform {
     }
   }
 }
-
 # Configure the AWS Provider
 provider "aws" {
   region = "us-east-1"
@@ -22,8 +21,8 @@ resource "aws_ecr_repository" "dms" {
   }
 }
 
-resource "aws_iam_policy" "CodeBuildBasePolicy-dms-us-east-1" {
-  description = "Policy used in trust relationship with CodeBuild"
+resource "aws_iam_policy" "codebuild-dms-service-role-policy" {
+  description = "DMS Policy used in trust relationship with CodeBuild"
   path                = "/service-role/"
   policy      = jsonencode(
           {
@@ -88,7 +87,7 @@ resource "aws_iam_role" "codebuild-dms-service-role" {
   name                = "codebuild-dms-service-role"
   path                = "/service-role/"
   assume_role_policy  = data.aws_iam_policy_document.instance-assume-role-policy.json # (not shown)
-  managed_policy_arns = [aws_iam_policy.CodeBuildBasePolicy-dms-us-east-1.arn]
+  managed_policy_arns = [aws_iam_policy.codebuild-dms-service-role-policy.arn]
 
 }
 
