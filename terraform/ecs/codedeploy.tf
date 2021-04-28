@@ -1,4 +1,4 @@
-### Deploy Pipeline ###
+### Code Deploy ###
 data "aws_iam_policy_document" "dms-code-deploy" {
   version = "2012-10-17"
   statement {
