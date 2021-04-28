@@ -1,4 +1,4 @@
-### Code Pipeline ###
+### Code Build ###
 resource "aws_ecr_repository" "dms" {
   name                 = "dms"
   image_tag_mutability = "MUTABLE"
@@ -27,8 +27,8 @@ resource "aws_iam_policy" "policy" {
       {
         Effect : "Allow",
         Resource : [
-          "arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:log-group:dms",
-          "arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:log-group:dms:*"
+          "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:dms",
+          "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:dms:*"
         ],
         Action : [
           "logs:CreateLogGroup",
@@ -39,8 +39,8 @@ resource "aws_iam_policy" "policy" {
       {
         Effect : "Allow",
         Resource : [
-          "arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/dms-build",
-          "arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/dms-build:*"
+          "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/dms-build",
+          "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/dms-build:*"
         ],
         Action : [
           "logs:CreateLogGroup",
@@ -51,7 +51,7 @@ resource "aws_iam_policy" "policy" {
       {
         Effect : "Allow",
         Resource : [
-          "arn:aws:s3:::codepipeline-us-east-1-*"
+          "arn:aws:s3:::codepipeline-${var.region}-*"
         ],
         Action : [
           "s3:PutObject",
@@ -71,7 +71,7 @@ resource "aws_iam_policy" "policy" {
           "codebuild:BatchPutCodeCoverages"
         ],
         Resource : [
-          "arn:aws:codebuild:us-east-1:${data.aws_caller_identity.current.account_id}:report-group/dms-build-*"
+          "arn:aws:codebuild:${var.region}:${data.aws_caller_identity.current.account_id}:report-group/dms-build-*"
         ]
       }
     ]
@@ -106,12 +106,12 @@ resource "aws_codebuild_project" "dms" {
     environment_variable {
       name  = "AWS_DEFAULT_REGION"
       type  = "PLAINTEXT"
-      value = "us-east-1"
+      value = var.region
     }
     environment_variable {
       name  = "AWS_ACCOUNT_ID"
       type  = "PLAINTEXT"
-      value = "674360240577"
+      value = data.aws_caller_identity.current.account_id
     }
     environment_variable {
       name  = "IMAGE_REPO_NAME"

@@ -99,7 +99,7 @@ resource "aws_ecs_task_definition" "dms-task" {
         "secretOptions": null,
         "options": {
           "awslogs-group": "/ecs/dms-task",
-          "awslogs-region": "us-east-1",
+          "awslogs-region": "${var.region}",
           "awslogs-stream-prefix": "dms-ecs"
         }
       },
@@ -126,7 +126,7 @@ resource "aws_ecs_task_definition" "dms-task" {
       "memoryReservation": null,
       "volumesFrom": [],
       "stopTimeout": null,
-      "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/dms:latest",
+      "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/dms:latest",
       "startTimeout": null,
       "firelensConfiguration": null,
       "dependsOn": null,

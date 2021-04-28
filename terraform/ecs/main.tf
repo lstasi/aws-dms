@@ -13,7 +13,7 @@ terraform {
 }
 # Configure the AWS Provider
 provider "aws" {
-  region = "us-east-1"
+  region = var.region
 }
 data "aws_caller_identity" "current" {}
 
