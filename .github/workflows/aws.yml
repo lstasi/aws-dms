@@ -38,7 +38,7 @@ jobs:
         aws-region: "us-east-1"
 
    - name: Deploy to Amazon ECS
-      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      uses: aws-actions/amazon-dms-deploy-task-definition@v1
       with:
         task-definition: task-definition.json
         service: my-service

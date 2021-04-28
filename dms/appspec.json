@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "Resources": [
+    {
+      "TargetService": {
+        "Type": "AWS::ECS::Service",
+        "Properties": {
+          "TaskDefinition": "arn:aws:ecs:us-east-1:674360240577:task-definition/dms-task:14",
+          "LoadBalancerInfo": {
+            "ContainerName": "dms",
+            "ContainerPort": 8080
+          },
+          "PlatformVersion": "LATEST"
+        }
+      }
+    }
+  ]
+}
