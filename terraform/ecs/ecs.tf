@@ -100,7 +100,7 @@ resource "aws_ecs_task_definition" "dms-task" {
         "options": {
           "awslogs-group": "/ecs/dms-task",
           "awslogs-region": "us-east-1",
-          "awslogs-stream-prefix": "ecs"
+          "awslogs-stream-prefix": "dms-ecs"
         }
       },
       "entryPoint": [],
