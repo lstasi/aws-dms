@@ -298,5 +298,5 @@ resource "aws_iam_role_policy_attachment" "dms-codepipeline-attach" {
 resource "aws_iam_role" "dms-codepipeline-role" {
   name               = "dms-codepipeline-role"
   path               = "/"
-  assume_role_policy = data.aws_iam_policy_document.code_pipeline-instance-assume-role-policy
+  assume_role_policy = data.aws_iam_policy_document.code_pipeline-instance-assume-role-policy.json
 }
