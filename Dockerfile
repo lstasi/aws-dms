@@ -1,4 +1,4 @@
-FROM python:3.8.9-alpine
+FROM public.ecr.aws/lambda/python:3.8
 # Set application working directory
 WORKDIR /usr/src/app
 # Install requirements
