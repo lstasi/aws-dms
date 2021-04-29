@@ -83,7 +83,7 @@ resource "aws_iam_role" "dms-codebuild-role" {
 resource "aws_codebuild_source_credential" "github" {
   auth_type   = "PERSONAL_ACCESS_TOKEN"
   server_type = "GITHUB"
-  token       = "$GITHUB_TOKEN"
+  token       = var.GITHUB_TOKEN
 }
 resource "aws_codebuild_project" "dms" {
   name           = "dms-build"
@@ -128,9 +128,10 @@ resource "aws_codebuild_project" "dms" {
   }
   source {
     type                = "GITHUB"
-    location            = "https://github.com/lstasi/aws-dms.git"
+    location            = var.REPO_URL
     report_build_status = true
     git_clone_depth     = 1
+
     git_submodules_config {
       fetch_submodules = false
     }

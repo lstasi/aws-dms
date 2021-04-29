@@ -27,8 +27,10 @@ Run terraform from terraform/ecs
 terraform apply
 ```
 
-# Build
+# CI Continous Integration
 To Build the application you only need to commit and push.
+
+# Manual Build
 You can also build by running AWS build start command.
 ```
 aws codebuild start-build --project-name dms-build

@@ -1,0 +1,24 @@
+{
+    "executionRoleArn": "arn:aws:iam::674360240577:role/dms-execution-role",
+    "containerDefinitions": [
+        {
+            "name": "dms",
+            "image": "<IMAGE1_NAME>",
+            "essential": true,
+            "portMappings": [
+                {
+                    "hostPort": 8080,
+                    "protocol": "tcp",
+                    "containerPort": 8080
+                }
+            ]
+        }
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "networkMode": "awsvpc",
+    "cpu": "256",
+    "memory": "512",
+    "family": "dms-task"
+}
