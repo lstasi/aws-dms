@@ -68,5 +68,7 @@ python src/app_test.py
 ```
 
 # TO-DO
+- [ ] Move Roles to IAM project
+- [ ] Setup WAF on ECS
 - [ ] Create NAT Gateway and Move ECS Subnets to private
 - [ ] Add new Staging environment step to the Pipeline
