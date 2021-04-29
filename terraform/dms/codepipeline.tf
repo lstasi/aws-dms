@@ -89,3 +89,13 @@ resource "aws_s3_bucket" "dms-bucket-deploy" {
         mfa_delete = false
     }
 }
+data "archive_file" "dms-zip" {
+  type        = "zip"
+  source_dir = "deploy"
+  output_path = "dms.zip"
+}
+resource "aws_s3_bucket_object" "dms-zip" {
+  bucket = aws_s3_bucket.dms-bucket-deploy.bucket
+  key    = "dms.zip"
+  source = "dms.zip"
+}

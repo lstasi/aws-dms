@@ -134,3 +134,7 @@ dmypy.json
 terraform.tfstate
 terraform.tfstate.*
 terraform.tfstate.backup
+
+# Deploy
+terraform/dms/dms.zip
+
