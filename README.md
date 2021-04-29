@@ -68,6 +68,8 @@ python src/app_test.py
 ```
 
 # TO-DO
+- [ ] Add Dynamo DB
+- [ ] Dynamo DB Local Instance
 - [ ] Move Roles to IAM project
 - [ ] Setup WAF on ECS
 - [ ] Create NAT Gateway and Move ECS Subnets to private
