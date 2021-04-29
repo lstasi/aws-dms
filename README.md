@@ -13,10 +13,11 @@ First Fork the Project and Clone.
 You will need to export AWS credentials as environment variables, and a GitHub personal token to connect from AWS.
 To generate a Personal Access Token: https://github.com/settings/tokens
 ```
-export AWS_ACCESS_KEY_ID=""
-export AWS_SECRET_ACCESS_KEY=""
-export AWS_DEFAULT_REGION=""
-export GIT_HUB_TOKEN=""
+export AWS_ACCESS_KEY_ID="RANDOM_KEY_ID"
+export AWS_SECRET_ACCESS_KEY="SECRET_KEY_ID"
+export AWS_DEFAULT_REGION="us-east-1"
+export TF_VAR_GITHUB_TOKEN="SECRET_PERSONAL_TOKEN"
+export TF_VAR_REPO_URL="http://gihub.com/user/repo"
 ```
 
 # Terraform
@@ -27,10 +28,18 @@ Run terraform from terraform/ecs
 terraform apply
 ```
 
-# CI Continous Integration
-To Build the application you only need to commit and push.
+# CI/CD Continuous Integration Continuous Deploy
+To Build and Deploy the application, you only need to commit and push.
 
-# Manual Build
+# PipeLine
+Each time a new commit is push into the main branch, AWS Code Build is triggered running the build spec definitions in buildspec.yml
+The build runs Unit test and if they are all green a new Docker image is build and push to ECR.
+Then when Code Pipeline detects there is a new Docker image, the image is deployed into the ECS Cluster using a Blue/Green Deploy.
+```
+AWS CodeBuild -> AWS ECR -> AWS CodePipeline -> AWS ECS Blue/Green Deploy
+```
+
+# Manual Build and Deploy trigger
 You can also build by running AWS build start command.
 ```
 aws codebuild start-build --project-name dms-build
@@ -39,7 +48,7 @@ aws codebuild start-build --project-name dms-build
 # Deploy Pipeline
 After build is completed a new image is push to ECR
 The new image will trigger the Pipeline that deploy the Docker into ECS
-You can also run the deploy process manually using this command
+You can also run the deployment process manually using this command
 ```
 
 ```
@@ -57,3 +66,7 @@ docker run -p 8080:8080 dms
 pip install -r requirements.txt
 python src/app_test.py
 ```
+
+# TO-DO
+- [ ] Create NAT Gateway and Move ECS Subnets to private
+- [ ] Add new Staging environment step to the Pipeline
