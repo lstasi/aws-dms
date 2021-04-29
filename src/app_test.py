@@ -1,6 +1,6 @@
 """Unit test file for app.py"""
-from app import *
 import unittest
+from app import home_page, return_back_string
 
 
 class TestApp(unittest.TestCase):

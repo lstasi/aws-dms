@@ -59,17 +59,41 @@ docker build -t dms .
 ```
 ## Local Docker Run
 ```
-docker run -p 8080:8080 dms
+docker run -p 8080:8080 -e FLASK_ENV=development dms
 ```
+## Local Docker Run DynamoDB
+```
+docker run -p 8000:8000 amazon/dynamodb-local
+```
+## Local Docker Run Composer App + DynamoDB
+```
+docker-composer up
+```
+
+
 ## Local Test Run
 ```
 pip install -r requirements.txt
-python src/app_test.py
+pytest
 ```
+
+## Local Run App
+```
+FLASK_ENV=development END_POINT=http://localhost:8000 python src/app.py
+```
+## Local API Testing
+```
+http://localhost:8080/init_db
+http://localhost:8080/get_movie/Matrix/1999
+http://localhost:8080/put_movie/TheMatrix/1999/Matrix/5
+http://localhost:8080/get_movie/TheMatrix/1999
+```
+
 
 # TO-DO
 - [ ] Add Dynamo DB
 - [ ] Dynamo DB Local Instance
+- [ ] Add https support
 - [ ] Move Roles to IAM project
 - [ ] Setup WAF on ECS
 - [ ] Create NAT Gateway and Move ECS Subnets to private

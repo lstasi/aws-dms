@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  dms:
+    image: "dms"
+    container_name: dms-local
+    ports:
+      - "8080:8080"
+    environment:
+      FLASK_ENV: 'development'
+      AWS_DEFAULT_REGION: 'eu-west-1'
+      AWS_ACCESS_KEY_ID: 'DUMMYIDEXAMPLE'
+      AWS_SECRET_ACCESS_KEY: 'DUMMYEXAMPLEKEY'
+      END_POINT: 'http://dynamodb-local:8000'
+  dynamodb-local:
+    image: "amazon/dynamodb-local:latest"
+    container_name: dynamodb-local
+    ports:
+      - "8000:8000"
