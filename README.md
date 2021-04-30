@@ -91,10 +91,8 @@ http://localhost:8080/get_movie/TheMatrix/1999
 
 
 # TO-DO
-- [ ] Add Dynamo DB
-- [ ] Dynamo DB Local Instance
-- [ ] Add https support
 - [ ] Move Roles to IAM project
+- [ ] Add https support
 - [ ] Setup WAF on ECS
 - [ ] Create NAT Gateway and Move ECS Subnets to private
 - [ ] Add new Staging environment step to the Pipeline
