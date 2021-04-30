@@ -23,7 +23,7 @@ export TF_VAR_REPO_URL="http://gihub.com/user/repo"
 # Terraform
 Terraform version: v0.14.10
 
-Run terraform from terraform/ecs
+Run terraform from terraform/dms
 ```
 terraform apply
 ```
@@ -36,7 +36,7 @@ Each time a new commit is push into the main branch, AWS Code Build is triggered
 The build runs Unit test and if they are all green a new Docker image is build and push to ECR.
 Then when Code Pipeline detects there is a new Docker image, the image is deployed into the ECS Cluster using a Blue/Green Deploy.
 ```
-AWS CodeBuild -> AWS ECR -> AWS CodePipeline -> AWS ECS Blue/Green Deploy
+GitHub -> AWS CodeBuild -> AWS ECR -> AWS CodePipeline -> AWS ECS Blue/Green Deploy
 ```
 
 # Manual Build and Deploy trigger
