@@ -1,4 +1,4 @@
-FROM public.ecr.aws/lambda/python:3.8
+FROM public.ecr.aws/sam/build-python3.8:latest
 # Set application working directory
 WORKDIR /usr/src/app
 # Install requirements
