@@ -5,6 +5,16 @@
             "name": "dms",
             "image": "<IMAGE1_NAME>",
             "essential": true,
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "secretOptions": null,
+                "options": {
+                  "awslogs-group": "dms",
+                  "awslogs-region": "us-east-1",
+                  "awslogs-stream-prefix": "dms-ecs"
+                }
+              },
+            "entryPoint": [],
             "portMappings": [
                 {
                     "hostPort": 8080,
@@ -20,14 +30,5 @@
     "networkMode": "awsvpc",
     "cpu": "256",
     "memory": "512",
-    "family": "dms-task",
-    "logConfiguration": {
-        "logDriver": "awslogs",
-        "secretOptions": null,
-        "options": {
-          "awslogs-group": "/ecs/dms-task",
-          "awslogs-region": "us-east-1",
-          "awslogs-stream-prefix": "dms-ecs"
-        }
-      }
+    "family": "dms"
 }
