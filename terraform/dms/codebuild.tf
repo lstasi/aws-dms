@@ -132,3 +132,18 @@ resource "aws_codebuild_project" "dms" {
     "project" = "dms"
   }
 }
+resource "aws_codebuild_webhook" "dms-webhook" {
+  project_name = aws_codebuild_project.dms.name
+
+  filter_group {
+    filter {
+      type    = "EVENT"
+      pattern = "PUSH"
+    }
+
+    filter {
+      type    = "HEAD_REF"
+      pattern = "main"
+    }
+  }
+}
