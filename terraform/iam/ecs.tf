@@ -1,3 +1,11 @@
+resource "aws_iam_role" "execution_role" {
+  name               = "dms-execution-role"
+  assume_role_policy = data.aws_iam_policy_document.execution_role-policy.json
+  description        = "DMS ECS Execution"
+  tags = {
+    project = "dms"
+  }
+}
 data "aws_iam_policy_document" "execution_role-policy" {
   version = "2012-10-17"
   statement {
@@ -6,14 +14,6 @@ data "aws_iam_policy_document" "execution_role-policy" {
       type        = "Service"
       identifiers = ["ecs-tasks.amazonaws.com"]
     }
-  }
-}
-resource "aws_iam_role" "execution_role" {
-  name               = "dms-execution-role"
-  assume_role_policy = data.aws_iam_policy_document.execution_role-policy.json
-  description        = "DMS ECS Execution"
-  tags = {
-    project = "dms"
   }
 }
 resource "aws_iam_role_policy_attachment" "dms-execution-role-attach" {
@@ -36,4 +36,12 @@ resource "aws_iam_role" "task_role" {
   tags = {
     project = "dms"
   }
+}
+resource "aws_iam_role_policy_attachment" "dms-task-role-attach" {
+  role       = aws_iam_role.task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/EC2InstanceProfileForImageBuilderECRContainerBuilds"
+}
+resource "aws_iam_role_policy_attachment" "dms-task-role-attach-dynamo" {
+  role       = aws_iam_role.task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
 }
