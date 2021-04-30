@@ -1,7 +1,9 @@
 resource "aws_codepipeline" "dms-pipeline" {
   name     = "dms-pipeline"
   role_arn = aws_iam_role.dms-codepipeline-role.arn
-  tags     = {}
+  tags     = {
+    project = "dms"
+  }
 
   artifact_store {
     location = aws_s3_bucket.dms-bucket-deploy.bucket
