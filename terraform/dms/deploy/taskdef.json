@@ -20,5 +20,14 @@
     "networkMode": "awsvpc",
     "cpu": "256",
     "memory": "512",
-    "family": "dms-task"
+    "family": "dms-task",
+    "logConfiguration": {
+        "logDriver": "awslogs",
+        "secretOptions": null,
+        "options": {
+          "awslogs-group": "/ecs/dms-task",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "dms-ecs"
+        }
+      }
 }
