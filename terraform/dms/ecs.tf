@@ -50,7 +50,7 @@ resource "aws_ecs_service" "dms-service" {
   health_check_grace_period_seconds = 0
 
   cluster                 = aws_ecs_cluster.dms-ecs-cluster.id
-  desired_count           = 1
+  desired_count           = var.service_count
   enable_ecs_managed_tags = true
   launch_type             = "FARGATE"
   platform_version        = "1.4.0"
@@ -83,9 +83,9 @@ resource "aws_ecs_task_definition" "dms-task" {
   cpu                      = "256"
   memory                   = "512"
   network_mode             = "awsvpc"
-  execution_role_arn       = aws_iam_role.execution_role.arn
+  execution_role_arn       = data.aws_iam_role.dms-execution-role.arn
   requires_compatibilities = ["FARGATE"]
-  task_role_arn            = aws_iam_role.task_role.arn
+  task_role_arn            = data.aws_iam_role.dms-task-role.arn
   tags = {
     project = "dms"
   }
@@ -147,43 +147,4 @@ resource "aws_ecs_task_definition" "dms-task" {
     }
 ]
 TASK_DEFINITION
-}
-data "aws_iam_policy_document" "execution_role-policy" {
-  version = "2012-10-17"
-  statement {
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
-    }
-  }
-}
-resource "aws_iam_role" "execution_role" {
-  name               = "dms-execution-role"
-  assume_role_policy = data.aws_iam_policy_document.execution_role-policy.json
-  description        = "DMS ECS Execution"
-  tags = {
-    project = "dms"
-  }
-}
-resource "aws_iam_role_policy_attachment" "dms-execution-role-attach" {
-  role       = aws_iam_role.task_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-data "aws_iam_policy_document" "task_role-policy" {
-  statement {
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
-    }
-  }
-}
-resource "aws_iam_role" "task_role" {
-  name               = "dms-task-role"
-  assume_role_policy = data.aws_iam_policy_document.task_role-policy.json
-  description        = "DMS ECS Task"
-  tags = {
-    project = "dms"
-  }
 }

@@ -1,26 +1,4 @@
 ### Code Deploy ###
-data "aws_iam_policy_document" "dms-code-deploy" {
-  version = "2012-10-17"
-  statement {
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["codedeploy.amazonaws.com"]
-    }
-  }
-}
-resource "aws_iam_role_policy_attachment" "dms-code-deploy-attach" {
-  role       = aws_iam_role.dms-code-deploy.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"
-}
-resource "aws_iam_role" "dms-code-deploy" {
-  name               = "dms-code-deploy"
-  assume_role_policy = data.aws_iam_policy_document.dms-code-deploy.json
-  description        = "DMS code deploy"
-  tags = {
-    project = "dms"
-  }
-}
 resource "aws_codedeploy_app" "dms-app" {
   name             = "dms-app"
   compute_platform = "ECS"
@@ -31,7 +9,7 @@ resource "aws_codedeploy_app" "dms-app" {
 resource "aws_codedeploy_deployment_group" "dms-app-group" {
   deployment_group_name  = "dms-app-group"
   app_name               = aws_codedeploy_app.dms-app.name
-  service_role_arn       = aws_iam_role.dms-code-deploy.arn
+  service_role_arn       = data.aws_iam_role.dms-code-deploy.arn
   deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
   tags = {
     project = "dms"

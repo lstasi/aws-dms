@@ -10,3 +10,7 @@ variable "REPO_URL" {
   type = string
   default = "TF_VAR_REPO_URL"
 }
+variable "service_count" {
+  type = number
+  default = 1
+}
