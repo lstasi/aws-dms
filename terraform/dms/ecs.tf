@@ -72,7 +72,7 @@ resource "aws_ecs_service" "dms-service" {
   }
 
   network_configuration {
-    assign_public_ip = true
+    assign_public_ip = false
     security_groups  = [aws_security_group.dms-ecs-sg.id]
     subnets          = [aws_subnet.dms-cluster-subnet-blue.id, aws_subnet.dms-cluster-subnet-green.id]
   }
@@ -167,7 +167,7 @@ resource "aws_iam_role" "execution_role" {
   }
 }
 resource "aws_iam_role_policy_attachment" "dms-execution-role-attach" {
-  role       = aws_iam_role.execution_role.name
+  role       = aws_iam_role.task_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 data "aws_iam_policy_document" "task_role-policy" {
