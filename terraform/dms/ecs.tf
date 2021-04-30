@@ -43,7 +43,7 @@ resource "aws_security_group" "dms-ecs-sg" {
   }
 }
 data "aws_ecs_task_definition" "dms-task-def" {
-  task_definition = aws_ecs_task_definition.dms-task.family
+  task_definition = aws_ecs_task_definition.dms.family
 }
 resource "aws_ecs_service" "dms-service" {
   name                              = "dms-service"
@@ -59,7 +59,7 @@ resource "aws_ecs_service" "dms-service" {
     project = "dms"
   }
 
-  task_definition = "${aws_ecs_task_definition.dms-task.family}:${max(aws_ecs_task_definition.dms-task.revision, data.aws_ecs_task_definition.dms-task-def.revision)}"
+  task_definition = "${aws_ecs_task_definition.dms.family}:${max(aws_ecs_task_definition.dms.revision, data.aws_ecs_task_definition.dms-task-def.revision)}"
 
   deployment_controller {
     type = "CODE_DEPLOY"
@@ -78,8 +78,8 @@ resource "aws_ecs_service" "dms-service" {
   }
   timeouts {}
 }
-resource "aws_ecs_task_definition" "dms-task" {
-  family                   = "dms-task"
+resource "aws_ecs_task_definition" "dms" {
+  family                   = "dms"
   cpu                      = "256"
   memory                   = "512"
   network_mode             = "awsvpc"
@@ -98,7 +98,7 @@ resource "aws_ecs_task_definition" "dms-task" {
         "logDriver": "awslogs",
         "secretOptions": null,
         "options": {
-          "awslogs-group": "/ecs/dms-task",
+          "awslogs-group": "dms",
           "awslogs-region": "${var.region}",
           "awslogs-stream-prefix": "dms-ecs"
         }

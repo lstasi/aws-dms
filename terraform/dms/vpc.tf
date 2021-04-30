@@ -53,25 +53,34 @@ resource "aws_internet_gateway" "dms-igw" {
   }
 }
 data "aws_availability_zones" "available" {}
-resource "aws_subnet" "dms-cluster-subnet-blue" {
+resource "aws_subnet" "dms-cluster-subnet_public" {
   vpc_id     = aws_vpc.dms-vpc.id
   availability_zone = data.aws_availability_zones.available.names[0]
   cidr_block = "10.0.0.0/24"
   tags = {
-    Name    = "DMS Blue"
+    Name    = "DMS Public"
+    project = "dms"
+  }
+}
+resource "aws_subnet" "dms-cluster-subnet-blue" {
+  vpc_id     = aws_vpc.dms-vpc.id
+  availability_zone = data.aws_availability_zones.available.names[0]
+  cidr_block = "10.0.2.0/24"
+  tags = {
+    Name    = "DMS Blue Private"
     project = "dms"
   }
 }
 resource "aws_subnet" "dms-cluster-subnet-green" {
   vpc_id     = aws_vpc.dms-vpc.id
   availability_zone = data.aws_availability_zones.available.names[1]
-  cidr_block = "10.0.1.0/24"
+  cidr_block = "10.0.3.0/24"
   tags = {
-    Name    = "DMS Green"
+    Name    = "DMS Green Private"
     project = "dms"
   }
 }
-resource "aws_route_table" "igw" {
+resource "aws_route_table" "dms-igw" {
   vpc_id = aws_vpc.dms-vpc.id
   route {
     cidr_block = "0.0.0.0/0"
@@ -82,11 +91,39 @@ resource "aws_route_table" "igw" {
     project = "dms"
   }
 }
-resource "aws_route_table_association" "subnet_assoc_blue" {
-  subnet_id      = aws_subnet.dms-cluster-subnet-blue.id
-  route_table_id = aws_route_table.igw.id
+resource "aws_route_table_association" "subnet_assoc_public" {
+  subnet_id      = aws_subnet.dms-cluster-subnet_public.id
+  route_table_id = aws_route_table.dms-igw.id
 }
-resource "aws_route_table_association" "subnet_assoc_green" {
+resource "aws_eip" "nat_eip" {
+  vpc        = true
+  depends_on = [aws_internet_gateway.dms-igw]
+}
+resource "aws_nat_gateway" "dms-ngw" {
+  allocation_id = aws_eip.nat_eip.id
+  subnet_id     = aws_subnet.dms-cluster-subnet_public.id
+  depends_on = [aws_internet_gateway.dms-igw]
+  tags = {
+    Name    = "DMS"
+    project = "dms"
+  }
+}
+resource "aws_route_table" "dms-ngw" {
+  vpc_id = aws_vpc.dms-vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.dms-ngw.id
+  }
+  tags = {
+    Name    = "DMS"
+    project = "dms"
+  }
+}
+resource "aws_route_table_association" "subnet_assoc_blue_private" {
+  subnet_id      = aws_subnet.dms-cluster-subnet-blue.id
+  route_table_id = aws_route_table.dms-igw.id
+}
+resource "aws_route_table_association" "subnet_assoc_green_private" {
   subnet_id      = aws_subnet.dms-cluster-subnet-green.id
-  route_table_id = aws_route_table.igw.id
+  route_table_id = aws_route_table.dms-igw.id
 }

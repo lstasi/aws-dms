@@ -64,10 +64,7 @@ resource "aws_codepipeline" "dms-pipeline" {
         "TaskDefinitionTemplateArtifact" = "S3Artifacts"
         "TaskDefinitionTemplatePath"     = "taskdef.json"
       }
-      input_artifacts = [
-        "S3Artifacts",
-        "ECRArtifact",
-      ]
+      input_artifacts = ["S3Artifacts","ECRArtifact"]
       name             = "Deploy"
       output_artifacts = []
       owner            = "AWS"
