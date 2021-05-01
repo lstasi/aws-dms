@@ -17,6 +17,7 @@ resource "aws_lb_listener" "http_80" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.dms-group-service-blue.arn
   }
+  lifecycle { ignore_changes = [default_action] }
 }
 resource "aws_lb_target_group" "dms-group-service-blue" {
   name        = "dms-service-blue"

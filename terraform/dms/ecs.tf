@@ -77,6 +77,7 @@ resource "aws_ecs_service" "dms-service" {
     subnets          = [aws_subnet.dms-cluster-subnet-blue.id, aws_subnet.dms-cluster-subnet-green.id]
   }
   timeouts {}
+  lifecycle { ignore_changes = [task_definition,load_balancer] }
 }
 resource "aws_ecs_task_definition" "dms" {
   family                   = "dms"
