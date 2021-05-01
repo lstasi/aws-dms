@@ -199,3 +199,37 @@ resource "aws_iam_role" "dms-codepipeline-role" {
   path               = "/"
   assume_role_policy = data.aws_iam_policy_document.code_pipeline-instance-assume-role-policy.json
 }
+resource "aws_iam_role" "dms-cloudwatch-role" {
+  name               = "dms-cloudwatch-role"
+  path               = "/"
+  assume_role_policy = data.aws_iam_policy_document.code_cloudwatch-instance-assume-role-policy.json
+}
+data "aws_iam_policy_document" "code_cloudwatch-instance-assume-role-policy" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["events.amazonaws.com"]
+    }
+  }
+}
+resource "aws_iam_role_policy_attachment" "dms-cloudwatch-attach-inline" {
+  role       = aws_iam_role.dms-cloudwatch-role.name
+  policy_arn = aws_iam_policy.code_cloudwatch_policy.arn
+}
+resource "aws_iam_policy" "code_cloudwatch_policy" {
+  name = "code_cloudwatch_policy"
+  path = "/"
+  description = "DMS Code Cloudwatch Policy"
+  policy = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        Effect: "Allow",
+        Action: ["codepipeline:StartPipelineExecution"],
+        Resource: "*"
+      }
+    ]
+  })
+}

@@ -20,6 +20,11 @@ resource "aws_iam_role_policy_attachment" "dms-execution-role-attach" {
   role       = aws_iam_role.execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
+resource "aws_iam_role_policy_attachment" "dms-execution-role-attach-ecr" {
+  role       = aws_iam_role.execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/EC2InstanceProfileForImageBuilderECRContainerBuilds"
+}
+
 data "aws_iam_policy_document" "task_role-policy" {
   statement {
     actions = ["sts:AssumeRole"]
