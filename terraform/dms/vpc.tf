@@ -121,9 +121,9 @@ resource "aws_route_table" "dms-ngw" {
 }
 resource "aws_route_table_association" "subnet_assoc_blue_private" {
   subnet_id      = aws_subnet.dms-cluster-subnet-blue.id
-  route_table_id = aws_route_table.dms-igw.id
+  route_table_id = aws_route_table.dms-ngw.id
 }
 resource "aws_route_table_association" "subnet_assoc_green_private" {
   subnet_id      = aws_subnet.dms-cluster-subnet-green.id
-  route_table_id = aws_route_table.dms-igw.id
+  route_table_id = aws_route_table.dms-ngw.id
 }
