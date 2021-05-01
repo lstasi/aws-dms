@@ -1,7 +1,7 @@
 resource "aws_codepipeline" "dms-pipeline" {
   name     = "dms-pipeline"
   role_arn = data.aws_iam_role.dms-codepipeline-role.arn
-  tags     = {
+  tags = {
     project = "dms"
   }
 
@@ -64,7 +64,7 @@ resource "aws_codepipeline" "dms-pipeline" {
         "TaskDefinitionTemplateArtifact" = "S3Artifacts"
         "TaskDefinitionTemplatePath"     = "taskdef.json"
       }
-      input_artifacts = ["S3Artifacts","ECRArtifact"]
+      input_artifacts  = ["S3Artifacts", "ECRArtifact"]
       name             = "Deploy"
       output_artifacts = []
       owner            = "AWS"
@@ -88,50 +88,104 @@ resource "aws_s3_bucket" "dms-bucket-deploy" {
     mfa_delete = false
   }
 }
-data "archive_file" "dms-zip" {
-  type        = "zip"
-  source_dir  = "deploy"
-  output_path = "dms.zip"
-}
 resource "aws_s3_bucket_object" "dms-zip" {
   bucket = aws_s3_bucket.dms-bucket-deploy.bucket
   key    = "dms.zip"
   source = "dms.zip"
 }
 resource "aws_cloudwatch_event_rule" "ecr" {
-    description    = "DMS Cloud Watch ECR Rule"
-    event_bus_name = "default"
-    event_pattern  = jsonencode(
-        {
-            detail      = {
-                action-type     = [
-                    "PUSH",
-                ]
-                image-tag       = [
-                    "latest",
-                ]
-                repository-name = [
-                    "dms",
-                ]
-                result          = [
-                    "SUCCESS",
-                ]
-            }
-            detail-type = [
-                "ECR Image Action",
-            ]
-            source      = [
-                "aws.ecr",
-            ]
-        }
-    )
-    is_enabled     = true
-    name           = "dms-codepipeline-deploy"
-    tags           = {}
+  description    = "DMS Cloud Watch ECR Rule"
+  event_bus_name = "default"
+  event_pattern = jsonencode(
+    {
+      detail = {
+        action-type = [
+          "PUSH",
+        ]
+        image-tag = [
+          "latest",
+        ]
+        repository-name = [
+          "dms",
+        ]
+        result = [
+          "SUCCESS",
+        ]
+      }
+      detail-type = [
+        "ECR Image Action",
+      ]
+      source = [
+        "aws.ecr",
+      ]
+    }
+  )
+  is_enabled = true
+  name       = "dms-codepipeline-deploy"
+  tags       = {}
 }
 resource "aws_cloudwatch_event_target" "dms-pipeline" {
   target_id = "dms-codedeploy"
   rule      = aws_cloudwatch_event_rule.ecr.name
   arn       = aws_codepipeline.dms-pipeline.arn
-  role_arn = data.aws_iam_role.dms-cloudwatch-role.arn
+  role_arn  = data.aws_iam_role.dms-cloudwatch-role.arn
+}
+data "archive_file" "dms-zip" {
+  type        = "zip"
+  output_path = "dms.zip"
+
+  source {
+    filename = "taskdef.json"
+    content  = <<TASK_DEF
+{
+    "executionRoleArn": "${data.aws_iam_role.dms-execution-role}",
+    "containerDefinitions": [
+        {
+            "name": "dms",
+            "image": "<IMAGE1_NAME>",
+            "essential": true,
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "secretOptions": null,
+                "options": {
+                  "awslogs-group": "dms",
+                  "awslogs-region": "${var.region}",
+                  "awslogs-stream-prefix": "dms"
+                }
+              },
+            "entryPoint": [],
+            "portMappings": [
+                {
+                    "hostPort": 8080,
+                    "protocol": "tcp",
+                    "containerPort": 8080
+                }
+            ]
+        }
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "networkMode": "awsvpc",
+    "cpu": "256",
+    "memory": "512",
+    "family": "dms"
+}
+TASK_DEF
+  }
+
+  source {
+    filename = "appspec.yaml"
+    content  = <<APPSPEC
+version: 0.0
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: <TASK_DEFINITION>
+        LoadBalancerInfo:
+          ContainerName: "dms"
+          ContainerPort: 8080
+APPSPEC
+  }
 }
