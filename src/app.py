@@ -19,35 +19,38 @@ def init_db():
         dynamodb = boto3.resource("dynamodb", endpoint_url=endpoint)
     else:
         dynamodb = boto3.resource("dynamodb")
+    try:
+        table = dynamodb.create_table(
+            TableName='Movies',
+            KeySchema=[
+                {
+                    'AttributeName': 'year',
+                    'KeyType': 'HASH'  # Partition key
+                },
+                {
+                    'AttributeName': 'title',
+                    'KeyType': 'RANGE'  # Sort key
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'year',
+                    'AttributeType': 'N'
+                },
+                {
+                    'AttributeName': 'title',
+                    'AttributeType': 'S'
+                },
 
-    table = dynamodb.create_table(
-        TableName='Movies',
-        KeySchema=[
-            {
-                'AttributeName': 'year',
-                'KeyType': 'HASH'  # Partition key
-            },
-            {
-                'AttributeName': 'title',
-                'KeyType': 'RANGE'  # Sort key
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 10,
+                'WriteCapacityUnits': 10
             }
-        ],
-        AttributeDefinitions=[
-            {
-                'AttributeName': 'year',
-                'AttributeType': 'N'
-            },
-            {
-                'AttributeName': 'title',
-                'AttributeType': 'S'
-            },
-
-        ],
-        ProvisionedThroughput={
-            'ReadCapacityUnits': 10,
-            'WriteCapacityUnits': 10
-        }
-    )
+        )
+    except dynamodb.exceptions.ResourceInUseException:
+        print("Table already Exists")
+        pass
     response = table.put_item(
         Item={
             'year': 1999,
