@@ -13,3 +13,6 @@ data "aws_iam_role" "dms-task-role" {
 data "aws_iam_role" "dms-execution-role" {
   name = "dms-execution-role"
 }
+data "aws_iam_role" "dms-cloudwatch-role"{
+  name = "dms-cloudwatch-role"
+}
