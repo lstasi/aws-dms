@@ -98,3 +98,40 @@ resource "aws_s3_bucket_object" "dms-zip" {
   key    = "dms.zip"
   source = "dms.zip"
 }
+resource "aws_cloudwatch_event_rule" "ecr" {
+    description    = "DMS Cloud Watch ECR Rule"
+    event_bus_name = "default"
+    event_pattern  = jsonencode(
+        {
+            detail      = {
+                action-type     = [
+                    "PUSH",
+                ]
+                image-tag       = [
+                    "latest",
+                ]
+                repository-name = [
+                    "dms",
+                ]
+                result          = [
+                    "SUCCESS",
+                ]
+            }
+            detail-type = [
+                "ECR Image Action",
+            ]
+            source      = [
+                "aws.ecr",
+            ]
+        }
+    )
+    is_enabled     = true
+    name           = "dms-codepipeline-deploy"
+    tags           = {}
+}
+resource "aws_cloudwatch_event_target" "dms-pipeline" {
+  target_id = "dms-codedeploy"
+  rule      = aws_cloudwatch_event_rule.ecr.name
+  arn       = aws_codepipeline.dms-pipeline.arn
+  role_arn = data.aws_iam_role.dms-cloudwatch-role.arn
+}
