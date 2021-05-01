@@ -50,7 +50,7 @@ After build is completed a new image is push to ECR
 The new image will trigger the Pipeline that deploy the Docker into ECS
 You can also run the deployment process manually using this command
 ```
-
+aws codepipeline start-pipeline-execution --name dms-pipeline
 ```
 # Running the Microservice Locally
 ## Local Docker Build
@@ -93,6 +93,6 @@ http://localhost:8080/get_movie/TheMatrix/1999
 # TO-DO
 - [ ] Move Roles to IAM project
 - [ ] Add https support
-- [ ] Setup WAF on ECS
-- [ ] Create NAT Gateway and Move ECS Subnets to private
+- [ ] Setup WAF Policies for ECS
+- [X] Create NAT Gateway and Move ECS Subnets to private
 - [ ] Add new Staging environment step to the Pipeline
