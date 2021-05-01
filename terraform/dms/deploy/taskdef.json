@@ -1,19 +1,9 @@
 {
-    "executionRoleArn": "arn:aws:iam::674360240577:role/dms-execution-role",
     "containerDefinitions": [
         {
             "name": "dms",
             "image": "<IMAGE1_NAME>",
             "essential": true,
-            "logConfiguration": {
-                "logDriver": "awslogs",
-                "secretOptions": null,
-                "options": {
-                  "awslogs-group": "dms",
-                  "awslogs-region": "us-east-1",
-                  "awslogs-stream-prefix": "dms-ecs"
-                }
-              },
             "entryPoint": [],
             "portMappings": [
                 {
