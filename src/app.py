@@ -19,6 +19,9 @@ def init_db():
         dynamodb = boto3.resource("dynamodb", endpoint_url=endpoint)
     else:
         dynamodb = boto3.resource("dynamodb")
+
+    response = "Init Table"
+
     try:
         table = dynamodb.create_table(
             TableName='Movies',
@@ -48,19 +51,20 @@ def init_db():
                 'WriteCapacityUnits': 10
             }
         )
+        response = table.put_item(
+            Item={
+                'year': 1999,
+                'title': "Matrix",
+                'info': {
+                    'plot': "The Matrix",
+                    'rating': 5
+                }
+            }
+        )
     except:
         print("Table already Exists")
+        response = "Table Already Exists"
         pass
-    response = table.put_item(
-        Item={
-            'year': 1999,
-            'title': "Matrix",
-            'info': {
-                'plot': "The Matrix",
-                'rating': 5
-            }
-        }
-    )
     return response
 
 
