@@ -37,12 +37,6 @@ resource "aws_iam_policy_attachment" "policy-attach-devops-user" {
   policy_arn = aws_iam_policy.dms-policy.arn
 }
 
-output "key_id" {
-  value = "export AWS_ACCESS_KEY_ID=${aws_iam_access_key.devops-user.id}"
-}
-output "secret" {
-  value = "export AWS_SECRET_ACCESS_KEY=${aws_iam_access_key.devops-user.secret}"
-}
-output "region" {
-  value = "export AWS_DEFAULT_REGION=${var.region}"
+output "credentials" {
+  value = "export AWS_ACCESS_KEY_ID=${aws_iam_access_key.devops-user.id}\nexport AWS_SECRET_ACCESS_KEY=${aws_iam_access_key.devops-user.secret}\nexport AWS_DEFAULT_REGION=${var.region}"
 }

@@ -138,7 +138,7 @@ data "archive_file" "dms-zip" {
     filename = "taskdef.json"
     content  = <<TASK_DEF
 {
-    "executionRoleArn": "${data.aws_iam_role.dms-execution-role}",
+    "executionRoleArn": "${data.aws_iam_role.dms-execution-role.arn}",
     "containerDefinitions": [
         {
             "name": "dms",

@@ -4,7 +4,7 @@ resource "aws_lb" "dms-lb" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.dms-lb-sg.id]
-  subnets            = [aws_subnet.dms-cluster-subnet-blue.id,aws_subnet.dms-cluster-subnet-green.id]
+  subnets            = [aws_subnet.dms-cluster-subnet-blue-public.id,aws_subnet.dms-cluster-subnet-green-public.id]
   tags = {
     Name    = "DMS"
     project = "dms"

@@ -74,7 +74,7 @@ resource "aws_ecs_service" "dms-service" {
   network_configuration {
     assign_public_ip = false
     security_groups  = [aws_security_group.dms-ecs-sg.id]
-    subnets          = [aws_subnet.dms-cluster-subnet-blue.id, aws_subnet.dms-cluster-subnet-green.id]
+    subnets          = [aws_subnet.dms-cluster-subnet-blue-private.id, aws_subnet.dms-cluster-subnet-green-private.id]
   }
   timeouts {}
   lifecycle { ignore_changes = [task_definition,load_balancer] }
