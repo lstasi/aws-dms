@@ -48,7 +48,7 @@ def init_db():
                 'WriteCapacityUnits': 10
             }
         )
-    except dynamodb.exceptions.ResourceInUseException:
+    except:
         print("Table already Exists")
         pass
     response = table.put_item(
