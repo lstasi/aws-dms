@@ -169,6 +169,7 @@ data "archive_file" "dms-zip" {
     "networkMode": "awsvpc",
     "cpu": "256",
     "memory": "512",
+    "taskRoleArn": "${data.aws_iam_role.dms-task-role.arn}",
     "family": "dms"
 }
 TASK_DEF
